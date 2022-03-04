@@ -1,0 +1,70 @@
+---
+# Anamaria Ignjatovic
+title: 'DEA: Analysis'
+output: html_document
+---
+
+```{r}
+```
+## R Markdown
+
+```{r}
+#Load Packages
+library(dplyr)
+library(tidyverse)
+library(vtable)
+library(jtools)
+library(ggplot2)
+library(lubridate)
+```
+
+```{r setup}
+
+#Import .csv from data cleaning
+Alldat <- read.csv("AlldatCleanData.csv")
+sumtable(Alldat)
+
+#Create variable to distinguish before vs. after scorecard release
+before2015 <- Alldat %>% mutate(after = startdate >= '2015-09-01')
+
+#Create binary variable to distinguish low and high earnings colleges 
+finaldata <- before2015 %>% mutate(highearnings = earnings >= 50000) 
+
+#Linear regression                                     
+reg1 <- lm(index~highearnings*after, data = finaldata)
+
+#View regression output
+export_summs(reg1)
+
+```
+
+
+```{r}
+#Graph to show how college index varies over time with indications for high-earnings 
+ggplot(data = finaldata , aes(x = as.Date(enddate), y = index, color = highearnings, group = highearnings)) +
+    stat_summary(geom = 'line') +
+    geom_vline(xintercept = as.Date('2015-09-01')) + theme_minimal() +
+  labs(x = "Time") +
+  labs(y = "Index") +
+  ggtitle("College Index Over Time Per Earning Level")
+
+```
+Research Question: 
+
+The College Scorecard was released at the start of September 2015. Among colleges that predominantly grant bachelor’s degrees, did the release of the Scorecard shift
+student interest to high-earnings colleges relative to low-earnings ones (as proxied by Google searches for keywords associated with those colleges)?
+
+
+Written Analysis:
+
+For this project after cleaning the data, I created a variable called 'after' which would indicate if the observation was indicative of a index ranking before or after the release of the college scorecard. This variable also serves as a useful interaction term when running the regression. I also chose to create a binary variable called 'highearnings' that allows to distinguish between a college that is considered high vs. low earnings (True meaning high, False meaning low). I chose to distinguish high vs. low earning based on the value of 50,000 dollars. The reason I chose this value is based off of a histogram I made in the data cleaning section that shows the distribution of earnings. Based on this, I noticed a large drop in the count of earnings following the 50,000 marker which indicated to me that the most common incomes would be around $50k or under. This is also similar to the summary statistics table where the mean earnings were approximately 43,500 dollars. I felt that a cutoff slightly above that value, consistent with the income distribution histogram, allowed that number to make sense for my analysis. 
+
+After the creation of the two variables above, I created my linear regression model. Here, I chose to regress 'Index' on 'highearnings' and 'after' in order to address the research question if the release of the scorecard made students more interested in high-earnings colleges relative to low-earnings colleges. From the regression output table, I was able to draw the conclusion that a -3.12 unit decrease in the index for high-earning colleges is seen following the scorecard release. 
+
+I also created the line graph titled "College Index Over Time Per Earning Level" which shows how the college index varied over the given time period, per the dates provided. I also included an x-intercept line for September 1, 2019 which is the day the college scorecard was released. This was extremely useful since the data set was so large, seeing the exact cutoff date was able to show me where exactly I can draw conclusions about the index variation concerning the scorecard. The graph also has two separate lines that show the differences in high vs. low-earning colleges in order to accurately draw the necessary conclusions. Leading up to the scorecard release, both high and low-earning college index rankings were on the rise with low-earnings greater than high-earnings. Immediately following the release, low-earnings colleges saw a slight rise in their index, followed by a decline. After that initial separation between high + low-earning colleges, they followed almost the exact same trend through the beginning of 2016. 
+
+Going back to the research question, I think we can conclude that the release of the scorecard did have some impact on student interest of low-earnings colleges, and temporarily shifted interest, but not long-term or on a large scale. I think that it is important to note that the regression accounts for all time after the scorecard release, and both earning-level colleges saw a decline in index rankings around mid-2016. The graph above is very useful in being able to draw these conclusions because we can see the exact time of the release and how it may have impacted high and low-earning colleges. The impact of the Scorecard was minor in favor of low-earning colleges, as we can tell from the graph, since they show that the interest, per the index, did rise for a while and stayed above high-earnings colleges, before eventually leveling out. 
+
+Just a thought from looking at this graph that may have impacted the Google Trends data for both types of colleges is the time of year. We see at the beginning of what is typically a school year, interest rising across the board, followed by sharper declines going into 2016. A couple weeks/months prior to the time the scorecard was released is around the time many high school seniors begin to research and apply to colleges, which could have impacted the Google Trends data as well. Just food for thought. 
+
+
